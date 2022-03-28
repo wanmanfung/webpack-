@@ -1,26 +1,19 @@
-const http = require("http")
-const url = require("url")
-const util = require("util")
+const webpack = require("webpack")
+const devMiddleware = require("webpack-dev-middleware")
+const express = require("express")
 const fs = require("fs")
+const config = require("./webpack.config.js")
 
-const readFile = (path, res) => {
-  try {
-    const file = fs.readFileSync("." + path)
-    res.write(file.toString())
-  } catch (error) {}
-}
+const app = express()
 
-http
-  .createServer((req, res) => {
-    res.writeHead(200, {
-      "Content-Type": "text/plain",
-      "Access-Control-Allow-Origin": "*",
-    })
-    if (req.url === "/") {
-      res.write("end")
-    } else {
-      readFile(req.url, res)
-    }
-    res.end()
+app.use(
+  devMiddleware(webpack(config), {
+    publicPath: config.output.publicPath,
   })
-  .listen(3000)
+)
+
+app.use(express.static("dist"))
+
+app.use("/glsl", express.static("glsl"))
+
+app.listen(3000)

@@ -2,20 +2,24 @@ export default () => {
   const canvas = document.createElement("canvas")
 
   const gl = canvas.getContext("webgl")
-  let program
+  let program: any
 
-  async function getShaderSource(name) {
+  async function getShaderSource(name: string) {
     const response = await fetch(`http://localhost:3000/glsl/${name}.glsl`, {
       method: "get",
       mode: "cors",
-      accept: "text/plain",
     })
     const text = await response.text()
     return text
   }
 
-  function createShader(gl, type, source) {
+  function createShader(
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string
+  ) {
     const shader = gl.createShader(type) // 创建shader
+    if (!shader) return
     gl.shaderSource(shader, source) // 绑定shader与source
     gl.compileShader(shader) // 编译shader
     const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS) // 获取编译状态
@@ -26,8 +30,13 @@ export default () => {
     gl.deleteShader(shader)
   }
 
-  function createProgram(gl, vertexShader, fragmentShader) {
+  function createProgram(
+    gl: WebGLRenderingContext,
+    vertexShader: any,
+    fragmentShader: any
+  ) {
     const program = gl.createProgram() // 创建着色程序
+    if (!program) return
     gl.attachShader(program, vertexShader)
     gl.attachShader(program, fragmentShader) // 绑定shader
     gl.linkProgram(program) // 正式绑定
@@ -40,6 +49,7 @@ export default () => {
   }
 
   const canvasInit = async () => {
+    if (!gl) return
     const fragmentSource = await getShaderSource("fragment")
     const vertexSource = await getShaderSource("vertex")
 
@@ -55,7 +65,8 @@ export default () => {
     gl.useProgram(program) // 启用程序
   }
 
-  function drawTriangles(points) {
+  function drawTriangles(points: number[] | undefined) {
+    if (!gl) return
     gl.clear(gl.COLOR_BUFFER_BIT)
     // 寻找在vertex.glsl中定义的变量a_position
     const aPosition = gl.getAttribLocation(program, "a_position")
@@ -68,13 +79,13 @@ export default () => {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer) //
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array([...points]),
+      new Float32Array([...(points || [])]),
       gl.STATIC_DRAW
     )
 
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0)
 
-    gl.drawArrays(gl.TRIANGLES, 0, points.length / 2)
+    gl.drawArrays(gl.TRIANGLES, 0, (points || []).length / 2)
   }
 
   function init() {
@@ -88,22 +99,23 @@ export default () => {
   init()
 
   const point = {
-    points: [],
-    add(point) {
+    points: [] as number[][],
+    add(point: number[]) {
       this.points.push(point)
     },
     get() {
       if (this.points.length % 3 === 0)
         return this.points.reduce((prevArr, item) => {
           return [...prevArr, ...item]
-        }, [])
+        }, [] as number[])
     },
   }
 
   canvas.addEventListener("click", event => {
+    if (!gl) return
     const { offsetX, offsetY } = event
     console.log(offsetX)
-    point.add([offsetX * 8, gl.canvas.height - offsetY * 8])
+    point.add([offsetX * 8, gl?.canvas?.height - offsetY * 8])
     if (point.get()) {
       drawTriangles(point.get())
     }
