@@ -4,8 +4,8 @@ const path = require("path")
 module.exports = {
   entry: "./src/index.ts",
   output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "dist/js"),
+    filename: "js/bundle.[contenthash].js",
+    path: path.resolve(__dirname, "dist"),
     clean: true,
     publicPath: "/",
   },
@@ -32,7 +32,6 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: "index.html",
       title: "test title",
-      hash: true,
     }),
   ],
 }
